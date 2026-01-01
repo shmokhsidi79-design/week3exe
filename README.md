@@ -610,3 +610,155 @@ Cross-validation ensures robust performance estimation.
 learning_rate and max_leaf_nodes significantly impact model performance.
 
 The best-performing configuration can be used for final training and evaluation.
+
+# moudle3 task2 
+
+Hyperparameter Tuning with KNN (California Housing)
+Overview
+
+This project explores the effect of preprocessing and hyperparameter tuning on a K-Nearest Neighbors (KNN) regression model using the California Housing dataset.
+
+The goal is to:
+
+Build a regression pipeline using StandardScaler and KNeighborsRegressor
+
+Tune hyperparameters using RandomizedSearchCV
+
+Analyze the effect of scaling and number of neighbors
+
+Visualize the results using a parallel coordinates plot
+
+Dataset
+
+We use the California Housing dataset, which contains both numerical and categorical features.
+
+Target variable:
+
+median_house_value
+
+Features include:
+
+Numerical features such as latitude, longitude, population, etc.
+
+Categorical feature: ocean_proximity
+
+Preprocessing
+
+Because the dataset contains both numeric and categorical features, we apply different preprocessing steps:
+
+Numerical features → StandardScaler
+
+Categorical features → OneHotEncoder
+
+This is done using a ColumnTransformer.
+
+Model Pipeline
+
+We build a pipeline composed of:
+
+StandardScaler (for numerical features)
+
+OneHotEncoder (for categorical features)
+
+KNeighborsRegressor (regression model)
+
+preprocessor = ColumnTransformer(
+    [
+        ("num", StandardScaler(), selector(dtype_exclude=object)),
+        ("cat", OneHotEncoder(handle_unknown="ignore"), selector(dtype_include=object)),
+    ]
+)
+
+model = make_pipeline(preprocessor, KNeighborsRegressor())
+
+Hyperparameter Search
+
+We tune the following parameters using RandomizedSearchCV:
+
+n_neighbors: number of neighbors used by KNN
+
+with_mean: whether to center features
+
+with_std: whether to scale features
+
+param_grid = {
+    "kneighborsregressor__n_neighbors": np.logspace(0, 3, num=10).astype(int),
+    "columntransformer__num__with_mean": [True, False],
+    "columntransformer__num__with_std": [True, False],
+}
+
+
+We use:
+
+n_iter = 10
+
+scoring = "neg_mean_absolute_error"
+
+Model Training
+search = RandomizedSearchCV(
+    model,
+    param_distributions=param_grid,
+    n_iter=10,
+    scoring="neg_mean_absolute_error",
+    random_state=42,
+    n_jobs=-1,
+)
+
+search.fit(data_train, target_train)
+
+Best Model
+print(search.best_params_)
+print("Best MAE:", -search.best_score_)
+
+
+This gives the best combination of:
+
+number of neighbors
+
+scaling configuration
+
+Analyzing Results
+
+We extract and clean the cross-validation results:
+
+cv_results = pd.DataFrame(search.cv_results_)
+cv_results["mae"] = -cv_results["mean_test_score"]
+
+cv_results = cv_results.rename(columns={
+    "param_kneighborsregressor__n_neighbors": "n_neighbors",
+    "param_columntransformer__num__with_mean": "centering",
+    "param_columntransformer__num__with_std": "scaling",
+})
+
+cv_results = cv_results[["n_neighbors", "centering", "scaling", "mae"]]
+cv_results[["centering", "scaling"]] = cv_results[["centering", "scaling"]].astype(int)
+cv_results["n_neighbors"] = cv_results["n_neighbors"].astype(int)
+
+cv_results.sort_values("mae").head()
+
+Visualization
+
+We visualize the relationship between hyperparameters and model performance using a parallel coordinates plot:
+
+import plotly.express as px
+
+fig = px.parallel_coordinates(
+    cv_results,
+    color="mae",
+    dimensions=["n_neighbors", "centering", "scaling", "mae"],
+)
+fig.show()
+
+Observations
+
+Feature scaling significantly improves model performance.
+
+Centering has a smaller impact compared to scaling.
+
+Very small values of n_neighbors lead to overfitting.
+
+Moderate values of n_neighbors provide the best generalization.
+
+Conclusion
+
+This experiment demonstrates how preprocessing and hyperparameter tuning can greatly impact model performance. Using RandomizedSearchCV allows efficient exploration of the parameter space while keeping computation manageable.

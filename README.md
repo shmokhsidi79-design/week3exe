@@ -845,3 +845,67 @@ Dummy classifier provides a baseline that reflects class imbalance.
 Logistic regression should outperform the dummy if it learns meaningful patterns.
 
 The histogram comparison shows whether the trained model truly adds predictive value.
+
+
+# moudle7 task2
+Dataset
+
+We use the Blood Transfusion Service Center dataset.
+
+Target column: Class
+
+Features: all remaining numeric columns
+
+Goal: predict whether a donor will donate blood again
+
+blood_transfusion = pd.read_csv("scikit-learn-mooc/datasets/blood_transfusion.csv")
+data = blood_transfusion.drop(columns="Class")
+target = blood_transfusion["Class"]
+
+Model
+
+We use a Decision Tree Classifier with a fixed random seed for reproducibility.
+
+from sklearn.tree import DecisionTreeClassifier
+
+tree = DecisionTreeClassifier(random_state=0)
+
+Cross-Validation Strategy
+
+We use Stratified K-Fold cross-validation to preserve the class distribution in each split.
+
+5 folds
+
+Shuffling enabled
+
+Fixed random seed
+
+from sklearn.model_selection import StratifiedKFold
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+
+Accuracy Evaluation
+
+We first evaluate the model using accuracy as the metric.
+
+from sklearn.model_selection import cross_val_score
+
+scores = cross_val_score(tree, data, target, cv=cv, scoring="accuracy")
+scores
+
+Precision with Custom Positive Label
+
+The positive class in this dataset is "donated", not 1.
+Therefore, we must explicitly specify the positive label when computing precision.
+
+from sklearn.metrics import make_scorer, precision_score
+
+precision_scorer = make_scorer(precision_score, pos_label="donated")
+
+
+We then evaluate precision using cross-validation:
+
+scores = cross_val_score(tree, data, target, cv=cv, scoring=precision_scorer)
+scores 
+
+# moudle7 task3

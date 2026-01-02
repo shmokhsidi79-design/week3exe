@@ -762,3 +762,86 @@ Moderate values of n_neighbors provide the best generalization.
 Conclusion
 
 This experiment demonstrates how preprocessing and hyperparameter tuning can greatly impact model performance. Using RandomizedSearchCV allows efficient exploration of the parameter space while keeping computation manageable.
+
+# moudle7 task1
+Dataset
+
+We use the Adult Census Income dataset:
+
+Target: class (income category)
+
+Features: All numeric columns
+
+Source: scikit-learn-mooc/datasets/adult-census-numeric-all.csv
+
+adult_census = pd.read_csv("scikit-learn-mooc/datasets/adult-census-numeric-all.csv")
+data = adult_census.drop(columns="class")
+target = adult_census["class"]
+
+Cross-validation strategy
+
+We use ShuffleSplit:
+
+10 splits
+
+50% train / 50% test
+
+Fixed random seed for reproducibility
+
+from sklearn.model_selection import ShuffleSplit
+
+cv = ShuffleSplit(n_splits=10, test_size=0.5, random_state=0)
+
+Logistic Regression Model
+
+The model pipeline includes:
+
+StandardScaler – standardizes numeric features
+
+LogisticRegression – linear classifier
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+model = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(max_iter=1000)
+)
+
+
+We evaluate it using cross_validate:
+
+from sklearn.model_selection import cross_validate
+
+cv_results_model = cross_validate(model, data, target, cv=cv)
+scores_logreg = pd.Series(cv_results_model["test_score"], name="log_reg")
+
+Dummy Baseline Model
+
+We compare against a DummyClassifier that always predicts the most frequent class.
+
+from sklearn.dummy import DummyClassifier
+
+dummy = DummyClassifier(strategy="most_frequent")
+
+cv_results_dummy = cross_validate(dummy, data, target, cv=cv)
+scores_dummy = pd.Series(cv_results_dummy["test_score"], name="dummy")
+
+Compare Model Performance
+
+We combine both results and visualize the score distributions.
+
+scores_df = pd.concat([scores_logreg, scores_dummy], axis=1)
+
+ax = scores_df.plot(kind="hist", bins=10, alpha=0.7)
+ax.set_xlabel("Accuracy")
+ax.set_title("Accuracy Distribution (Logistic Regression vs Dummy)")
+
+Interpretation
+
+Dummy classifier provides a baseline that reflects class imbalance.
+
+Logistic regression should outperform the dummy if it learns meaningful patterns.
+
+The histogram comparison shows whether the trained model truly adds predictive value.

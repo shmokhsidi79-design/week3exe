@@ -909,3 +909,61 @@ scores = cross_val_score(tree, data, target, cv=cv, scoring=precision_scorer)
 scores 
 
 # moudle7 task3
+Dataset
+
+We use the Ames Housing dataset, which contains house characteristics and their sale prices.
+
+Target: SalePrice
+
+Features: All numeric columns
+
+Preprocessing: Target values are scaled by dividing by 1000 for numerical stability.
+
+ames_housing = pd.read_csv("scikit-learn-mooc/datasets/house_prices.csv")
+data = ames_housing.drop(columns="SalePrice")
+target = ames_housing["SalePrice"]
+
+data = data.select_dtypes(np.number)
+target = target / 1000
+
+Model
+
+We use a Linear Regression model from scikit-learn.
+
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+
+Cross-Validation Setup
+
+We evaluate the model using K-Fold cross-validation:
+
+8 folds
+
+Shuffling enabled
+
+Fixed random seed for reproducibility
+
+from sklearn.model_selection import KFold, cross_val_score
+
+cv = KFold(n_splits=8, shuffle=True, random_state=42)
+
+R² Score (Coefficient of Determination)
+
+We first evaluate model performance using R², which measures how well the model explains the variance in the target.
+
+scores_r2 = cross_val_score(model, data, target, cv=cv, scoring="r2")
+scores_r2
+
+Mean Absolute Error (MAE)
+
+We also compute the Mean Absolute Error, which measures the average absolute prediction error.
+
+Note: scikit-learn returns negative values for loss metrics, so we negate the result to obtain positive MAE values.
+
+scores_mae = cross_val_score(
+    model, data, target, cv=cv, scoring="neg_mean_absolute_error"
+)
+
+mae = -scores_mae
+mae
